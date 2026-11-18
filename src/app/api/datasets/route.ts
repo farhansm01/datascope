@@ -1,9 +1,14 @@
-// GET /api/datasets: returns datasets authorized for the current user's role or account.
+// /api/datasets: GET (authorized datasets) and POST (admin: create new dataset).
 import { NextResponse } from "next/server";
 import { eq, inArray, or } from "drizzle-orm";
-import { getSession } from "@/server/guards";
+import { getSession, requireRole } from "@/server/guards";
 import { db } from "@/server/db/client";
-import { datasetPermissions, datasets, type Role } from "@/server/db/schema";
+import {
+  datasetFields,
+  datasetPermissions,
+  datasets,
+  type Role,
+} from "@/server/db/schema";
 
 export async function GET() {
   const session = await getSession();
@@ -52,4 +57,63 @@ export async function GET() {
     .orderBy(datasets.name);
 
   return NextResponse.json(authorizedDatasets);
+}
+
+export async function POST(request: Request) {
+  // Only admins can create datasets
+  try {
+    await requireRole(["admin"]);
+  } catch {
+    return NextResponse.json(
+      { error: "Forbidden: Admin role required" },
+      { status: 403 },
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { name, description, category, source } = body;
+
+    if (!name || !category || !source) {
+      return NextResponse.json(
+        { error: "Name, category, and source are required" },
+        { status: 400 },
+      );
+    }
+
+    // 1. Insert dataset
+    const [newDataset] = await db
+      .insert(datasets)
+      .values({
+        name: name.trim(),
+        description: description?.trim() || null,
+        category: category.trim(),
+        source: source.trim(),
+        totalRecords: 0,
+      })
+      .returning();
+
+    // 2. Insert standard fields definition so explorer and filters work
+    const standardFields = [
+      { key: "name", label: "Name", type: "text", isFilterable: true },
+      { key: "email", label: "Email", type: "text", isFilterable: true },
+      { key: "country", label: "Country", type: "select", isFilterable: true },
+      { key: "status", label: "Status", type: "select", isFilterable: true },
+      { key: "category", label: "Category", type: "select", isFilterable: true },
+      { key: "revenue", label: "Revenue", type: "number", isFilterable: true },
+      { key: "createdAt", label: "Created", type: "date", isFilterable: true },
+    ];
+
+    await db.insert(datasetFields).values(
+      standardFields.map((field) => ({ ...field, datasetId: newDataset.id })),
+    );
+
+    return NextResponse.json(newDataset, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create dataset:", error);
+    return NextResponse.json(
+      { error: "Failed to create dataset" },
+      { status: 500 },
+    );
+  }
 }

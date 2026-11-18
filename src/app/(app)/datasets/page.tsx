@@ -1,4 +1,4 @@
-// Dataset library page: server-fetched list of authorized datasets with cards and record counts.
+// Dataset library page: server-fetched list of authorized datasets with cards, record counts, and admin controls.
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq, inArray, or } from "drizzle-orm";
@@ -6,6 +6,8 @@ import { getSession } from "@/server/guards";
 import { db } from "@/server/db/client";
 import { datasetPermissions, datasets, type Role } from "@/server/db/schema";
 import EmptyState from "@/components/ui/EmptyState";
+import CreateDatasetButton from "@/features/datasets/components/CreateDatasetButton";
+import DatasetCardActions from "@/features/datasets/components/DatasetCardActions";
 
 async function getAuthorizedDatasets(userId: string, userRole: Role) {
   // Admins have access to all datasets
@@ -58,14 +60,7 @@ export default async function DatasetsPage() {
           </p>
         </div>
 
-        {role === "admin" && (
-          <Link
-            href="/datasets/new"
-            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition"
-          >
-            <span>+</span> Create Dataset
-          </Link>
-        )}
+        {role === "admin" && <CreateDatasetButton />}
       </div>
 
       {/* Dataset Cards Grid */}
@@ -82,14 +77,18 @@ export default async function DatasetsPage() {
               className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
             >
               <div>
-                {/* Top badges */}
+                {/* Top badges and admin actions */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 border border-blue-200">
-                    {ds.category}
-                  </span>
-                  <span className="text-xs text-gray-400 font-mono">
-                    {ds.source}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 border border-blue-200">
+                      {ds.category}
+                    </span>
+                    <span className="text-xs text-gray-400 font-mono">
+                      {ds.source}
+                    </span>
+                  </div>
+
+                  {role === "admin" && <DatasetCardActions dataset={ds} />}
                 </div>
 
                 {/* Dataset Name & Description */}
