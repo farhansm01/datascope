@@ -1,17 +1,19 @@
+// Server guards: session validation, role authorization, and dataset permissions.
+import { cache } from "react";
 import { headers } from "next/headers";
 import { and, eq, or } from "drizzle-orm";
 import { auth } from "./auth";
 import { db } from "./db/client";
 import { datasetPermissions, type Role } from "./db/schema";
 
-// 1. Get the current user session from the request headers
-export async function getSession() {
+// 1. Get current session from headers (cached per-request so duplicate calls in layout/page don't hit DB twice)
+export const getSession = cache(async () => {
   const reqHeaders = await headers();
   const session = await auth.api.getSession({
     headers: reqHeaders,
   });
   return session;
-}
+});
 
 // 2. Ensure a user is logged in
 export async function requireAuth() {
