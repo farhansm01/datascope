@@ -2,11 +2,16 @@
   "name": "datascope",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+ "scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint",
+  "db:generate": "drizzle-kit generate",
+  "db:migrate": "drizzle-kit migrate",
+  "db:push": "drizzle-kit push",
+  "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
+  "test": "vitest run"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1",
@@ -21,6 +26,7 @@
     "react-toastify": "^11.2.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",

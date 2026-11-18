@@ -1,0 +1,3 @@
+Query A (combined filters):     208 ms (Parallel Seq Scan)
+Query B (partial search count): 34.9 ms (Seq Scan)
+Query C (page 2000):            58.9 ms

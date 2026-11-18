@@ -1,0 +1,3 @@
+Query A (combined filters):     2.98 ms
+Query B (partial search count): 1.06 ms
+Query C (page 2000):            44.5 ms
