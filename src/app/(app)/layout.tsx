@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/guards";
+import type { Role } from "@/server/db/schema";
+import Sidebar from "@/components/layout/Sidebar";
+import Topbar from "@/components/layout/Topbar";
 
-// Server-side guard: Ensures only authenticated users can render pages inside (app)
 export default async function AppLayout({
   children,
 }: {
@@ -13,5 +15,24 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  return <div className="min-h-screen bg-gray-50">{children}</div>;
+  const role = (session.user.role as Role) || "viewer";
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Left sidebar with role-filtered navigation */}
+      <Sidebar userRole={role} />
+
+      {/* Right container: Topbar + Main scrollable view */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <Topbar
+          user={{
+            name: session.user.name,
+            email: session.user.email,
+            role,
+          }}
+        />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
+    </div>
+  );
 }
